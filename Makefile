@@ -1,21 +1,4 @@
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
+#Makefile to compile the code
 #
 #
 
