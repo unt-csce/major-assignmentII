@@ -33,9 +33,19 @@ void ProcessSpecialCommand(struct Command );
 void ProcessInput(char *);
 void ProcessInteractiveMode();
 int  ProcessBatchMode(const char * fileName);
+void InitialShell();
+void CleanShell();
 
+/* global variable to save all shell history commands */
+char * _gHistory[MAX_SIZE];
+int    _gCurrentLine;
+/* global variable for prompt command */
+char * _gPrompt; 
 int main(int argc, char ** argv)
 {
+	//Initial hisrory list
+	InitialShell();
+
 	if (argc == 1) /* Interactive Mode */
 		{	
 		ProcessInteractiveMode();
@@ -62,6 +72,15 @@ void ProcessInput(char * input)
 	j = 0;
 	numOfCommand = 0;
 
+	/* implement History Shell to save all previous shell commands, 
+	when user type: history -> it will list out all previous command */
+	if (strcmp(input, "history") != 0)
+		{
+		strcpy(_gHistory[_gCurrentLine],input);
+		_gCurrentLine ++;
+		}
+	//end
+
 	/* Initial list of commands */
 	for (i = 0; i < MAX_COMMAND; i++)
 		{
@@ -81,7 +100,7 @@ void ProcessInput(char * input)
 	ParseCommandArgument(lstCommand, numOfCommand);
 
 	//print out user commands and its arguments.
-	for (i = 0; i < numOfCommand; i ++)
+	/*for (i = 0; i < numOfCommand; i ++)
 		{
 		if (lstCommand[i].Type == NORMAL) 
 			{
@@ -96,12 +115,14 @@ void ProcessInput(char * input)
 				}
 			}
 
-		}
+		}*/
 			
 	for (i = 0; i < numOfCommand; i++)
 		{
 		/* process all commands here */
-		printf("Process command: %s\n", lstCommand[i].Name);
+		//printf("Process command: %s\n", lstCommand[i].Name);
+		if (lstCommand[i].Type != SPECIAL)
+			printf("\n\n");
 
 		if (lstCommand[i].Type == SPECIAL) /* special command need to process difference from normal */
 			{
@@ -206,7 +227,9 @@ void ParseCommand(struct Command list[MAX_COMMAND], int * numOfCommand, char * i
 		/* handle special command here */
 		if (strcmp(list[(*numOfCommand)].Name, "quit") == 0
 			|| strcmp(list[(*numOfCommand)].Name, "exit") == 0
-			|| strcmp(list[(*numOfCommand)].Name, "cd") == 0)
+			|| strcmp(list[(*numOfCommand)].Name, "cd") == 0
+			|| strcmp(list[(*numOfCommand)].Name, "history") == 0
+			|| strcmp(list[(*numOfCommand)].Name, "prompt") == 0)
 			{
 			list[(*numOfCommand)].Type = SPECIAL; //special command
 			}
@@ -258,9 +281,11 @@ void ParseCommandArgument(struct Command list[MAX_COMMAND], int numOfCommand)
 			if (list[i].Type == NORMAL)
 				list[i].Type = ARGUMENT;
 
-			printf("list[i].Name = %s\n", list[i].Name);
+			//printf("list[i].Name = %s\n", list[i].Name);
 			/* process for cd command */
-			if (strcmp(list[i].Name, "cd") == 0)
+			if (strcmp(list[i].Name, "cd") == 0
+				|| strcmp(list[i].Name, "history") == 0
+				|| strcmp(list[i].Name, "prompt") == 0)
 				{
 				list[i].Type = SPECIAL;
 				}
@@ -299,6 +324,32 @@ void ProcessSpecialCommand(struct Command cmd)
 			perror("Error while process the cd command: ");
 		  	}	
 		}
+	else if (strcmp(cmd.Name, "history") == 0) //support history command
+		{
+		/* print out all history from history List */
+		int i;
+		for (i = 0; i < _gCurrentLine; i++)
+			{
+			printf("%s\n", _gHistory[i]);
+			}
+		}
+	else if (strcmp(cmd.Name, "prompt") == 0)
+		{
+		//process prompt command.	
+		char buf[50];
+		if (cmd.NumOfArgument > 0)
+			{
+			//sprintf(buf, "chdir %s", cmd.Argument[0]);
+			//change to new prompt
+			strcpy(_gPrompt, cmd.Argument[0]);
+			
+			}
+		else if (cmd.NumOfArgument == 0)
+			{
+			printf("Please enter argument for prompt command \n");
+			}
+		
+		}
 	}
 
 void ResetCommand(struct Command list[MAX_COMMAND], int numOfCommand)
@@ -323,7 +374,8 @@ void ProcessInteractiveMode()
 		{
 		//interactive mode.
 		//print out the prompt
-		printf("prompt> ");
+		//printf("prompt> ");
+		printf("%s ", _gPrompt);
 
 		//read command
 		char * userInput;
@@ -385,3 +437,25 @@ int ProcessBatchMode(const char * fileName)
 		}
 	}
 
+void InitialShell()
+	{
+	_gCurrentLine = 0;
+	int i;
+	for (i = 0; i < MAX_SIZE; i++)
+		{
+		_gHistory[i] = (char *) malloc(sizeof(char) * (MAX_SIZE + 1));
+		}
+
+	_gPrompt = (char *) malloc(sizeof(char) * (MAX_SIZE + 1));
+	strcpy(_gPrompt, "prompt>"); 
+	
+	}
+
+void CleanShell()
+	{
+	int i;
+	/*for (i = 0; i < MAX_SIZE; i++)
+		{
+		free(_gHistory[i]);
+		}*/
+	}
